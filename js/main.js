@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAccountSelector();
     initializeCompose();
     initializeContacts();
+    initializeAccountManagement();
     initializeLogout();
     loadUserData();
 });
@@ -452,29 +453,201 @@ function loadSent() {
 }
 
 function loadAccounts() {
-    const accounts = JSON.parse(localStorage.getItem('accounts') || '[{"email": "user@example.com", "primary": true}]');
-    
-    if (accounts.length > 1) {
-        const accountSelector = document.getElementById('accountSelectorDropdown');
-        const dropdownMenu = accountSelector.querySelector('.dropdown-menu');
-        
-        const accountItems = accounts.map(account => `
-            <li><a class="dropdown-item account-item ${account.primary ? 'active' : ''}" href="#" data-account="${escapeHtml(account.email)}">
-                ${account.primary ? '<i class="bi bi-check-circle-fill me-2"></i>' : '<i class="bi bi-circle me-2"></i>'}${escapeHtml(account.email)}
-            </a></li>
-        `).join('');
-        
-        dropdownMenu.innerHTML = `
-            <li><h6 class="dropdown-header">Accounts</h6></li>
-            ${accountItems}
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="accounts.html">
-                <i class="bi bi-gear me-2"></i>Manage Accounts
-            </a></li>
-        `;
-        
-        initializeAccountSelector();
+    let accounts = JSON.parse(localStorage.getItem('accounts'));
+    if (!accounts) {
+        accounts = [{"id": 1, "email": "user@example.com", "primary": true}];
+        localStorage.setItem('accounts', JSON.stringify(accounts));
     }
+    
+    const accountSelector = document.getElementById('accountSelectorDropdown');
+    if (!accountSelector) return;
+    
+    const dropdownMenu = accountSelector.querySelector('.dropdown-menu');
+    if (!dropdownMenu) return;
+    
+    const accountItems = accounts.map(account => `
+        <li><a class="dropdown-item account-item ${account.primary ? 'active' : ''}" href="#" data-account="${escapeHtml(account.email)}">
+            ${account.primary ? '<i class="bi bi-check-circle-fill me-2"></i>' : '<i class="bi bi-circle me-2"></i>'}${escapeHtml(account.email)}
+        </a></li>
+    `).join('');
+    
+    dropdownMenu.innerHTML = `
+        <li><h6 class="dropdown-header">Accounts</h6></li>
+        ${accountItems}
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" data-section="accounts">
+            <i class="bi bi-gear me-2"></i>Manage Accounts
+        </a></li>
+    `;
+    
+    // Re-initialize account selector listeners
+    const newAccountItems = dropdownMenu.querySelectorAll('.account-item');
+    newAccountItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const account = this.getAttribute('data-account');
+            switchAccount(account);
+        });
+    });
+
+    // Handle "Manage Accounts" click in dropdown
+    const manageLink = dropdownMenu.querySelector('[data-section="accounts"]');
+    if (manageLink) {
+        manageLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateToSection('accounts');
+        });
+    }
+}
+
+function initializeAccountManagement() {
+    const addNewAccountBtn = document.getElementById('addNewAccountBtn');
+    const saveAccountActionBtn = document.getElementById('saveAccountActionBtn');
+    
+    if (addNewAccountBtn) {
+        addNewAccountBtn.addEventListener('click', function() {
+            openAccountModal();
+        });
+    }
+    
+    if (saveAccountActionBtn) {
+        saveAccountActionBtn.addEventListener('click', function() {
+            saveAccount();
+        });
+    }
+
+    renderAccountsList();
+}
+
+function openAccountModal(accountId = null) {
+    const modalTitle = document.getElementById('accountModalLabel');
+    const form = document.getElementById('accountForm');
+    form.reset();
+    document.getElementById('accountId').value = '';
+
+    if (accountId) {
+        modalTitle.textContent = 'Edit Account';
+        const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+        const account = accounts.find(a => a.id === accountId);
+        if (account) {
+            document.getElementById('accountId').value = account.id;
+            document.getElementById('accountEmail').value = account.email;
+            document.getElementById('accountProtocol').value = account.protocol || 'imap';
+            document.getElementById('incomingHost').value = account.incomingHost || '';
+            document.getElementById('incomingPort').value = account.incomingPort || '';
+            document.getElementById('incomingUser').value = account.incomingUser || '';
+            document.getElementById('incomingPass').value = account.incomingPass || '';
+            document.getElementById('outgoingHost').value = account.outgoingHost || '';
+            document.getElementById('outgoingPort').value = account.outgoingPort || '';
+            document.getElementById('outgoingUser').value = account.outgoingUser || '';
+            document.getElementById('outgoingPass').value = account.outgoingPass || '';
+        }
+    } else {
+        modalTitle.textContent = 'Add New Account';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('accountModal'));
+    modal.show();
+}
+
+function saveAccount() {
+    const email = document.getElementById('accountEmail').value;
+    if (!email) {
+        alert('Email address is required.');
+        return;
+    }
+
+    const accountId = document.getElementById('accountId').value;
+    const accountData = {
+        id: accountId ? parseInt(accountId) : Date.now(),
+        email: email,
+        protocol: document.getElementById('accountProtocol').value,
+        incomingHost: document.getElementById('incomingHost').value,
+        incomingPort: document.getElementById('incomingPort').value,
+        incomingUser: document.getElementById('incomingUser').value,
+        incomingPass: document.getElementById('incomingPass').value,
+        outgoingHost: document.getElementById('outgoingHost').value,
+        outgoingPort: document.getElementById('outgoingPort').value,
+        outgoingUser: document.getElementById('outgoingUser').value,
+        outgoingPass: document.getElementById('outgoingPass').value,
+        primary: false
+    };
+
+    let accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+    
+    if (accounts.length === 0) {
+        accountData.primary = true;
+    }
+
+    if (accountId) {
+        const index = accounts.findIndex(a => a.id === parseInt(accountId));
+        if (index !== -1) {
+            accountData.primary = accounts[index].primary;
+            accounts[index] = accountData;
+        }
+    } else {
+        accounts.push(accountData);
+    }
+
+    localStorage.setItem('accounts', JSON.stringify(accounts));
+    
+    const modalElement = document.getElementById('accountModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+        modal.hide();
+    } else {
+        // Fallback if getInstance fails
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        bsModal.hide();
+    }
+
+    renderAccountsList();
+    loadAccounts();
+}
+
+function renderAccountsList() {
+    const accountsList = document.getElementById('accountsList');
+    if (!accountsList) return;
+
+    let accounts = JSON.parse(localStorage.getItem('accounts'));
+    if (!accounts) {
+        accounts = [{"id": 1, "email": "user@example.com", "primary": true}];
+    }
+    
+    accountsList.innerHTML = accounts.map(account => `
+        <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">${escapeHtml(account.email)}</h6>
+                    <small class="text-muted">${account.primary ? 'Primary Account' : 'Secondary Account'}</small>
+                </div>
+                <div>
+                    <span class="badge bg-success">Active</span>
+                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="openAccountModal(${account.id})">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                    ${!account.primary ? `
+                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAccount(${account.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function deleteAccount(accountId) {
+    if (!confirm('Are you sure you want to delete this account?')) {
+        return;
+    }
+    
+    let accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+    accounts = accounts.filter(a => a.id !== accountId);
+    localStorage.setItem('accounts', JSON.stringify(accounts));
+    
+    renderAccountsList();
+    loadAccounts();
 }
 
 function formatDate(dateString) {

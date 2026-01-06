@@ -199,23 +199,10 @@
                             </div>
                             <div class="card-body">
                                 <p class="text-muted">Manage your email accounts and settings.</p>
-                                <div class="list-group mb-3">
-                                    <div class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between align-items-center">
-                                            <div>
-                                                <h6 class="mb-1">user@example.com</h6>
-                                                <small class="text-muted">Primary Account</small>
-                                            </div>
-                                            <div>
-                                                <span class="badge bg-success">Active</span>
-                                                <button class="btn btn-sm btn-outline-primary ms-2">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="list-group mb-3" id="accountsList">
+                                    <!-- Accounts will be loaded here dynamically -->
                                 </div>
-                                <button class="btn btn-primary">
+                                <button class="btn btn-primary" id="addNewAccountBtn">
                                     <i class="bi bi-plus-circle me-2"></i>Add New Account
                                 </button>
                             </div>
@@ -313,6 +300,85 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveContactBtn">Save Contact</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="accountModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountModalLabel">Add New Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accountForm">
+                        <input type="hidden" id="accountId">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="accountEmail" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="accountEmail" required placeholder="user@example.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="accountProtocol" class="form-label">Protocol</label>
+                                <select class="form-select" id="accountProtocol">
+                                    <option value="imap">IMAP</option>
+                                    <option value="pop3">POP3</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h6 class="mb-3">Incoming Server Settings</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="incomingHost" class="form-label">Server Host</label>
+                                <input type="text" class="form-control" id="incomingHost" required placeholder="imap.example.com">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="incomingPort" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="incomingPort" required placeholder="993">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="incomingUser" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="incomingUser" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="incomingPass" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="incomingPass" required>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h6 class="mb-3">Outgoing Server Settings (SMTP)</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="outgoingHost" class="form-label">Server Host</label>
+                                <input type="text" class="form-control" id="outgoingHost" required placeholder="smtp.example.com">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="outgoingPort" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="outgoingPort" required placeholder="465">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="outgoingUser" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="outgoingUser" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="outgoingPass" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="outgoingPass" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveAccountActionBtn">Save Account</button>
                 </div>
             </div>
         </div>
